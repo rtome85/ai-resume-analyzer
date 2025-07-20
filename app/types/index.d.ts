@@ -56,3 +56,7 @@ interface Job {
       }[];
     };
   }
+
+  interface FileUploaderProps {
+    onFileSelect?: (file: File | null) => void;
+  }
