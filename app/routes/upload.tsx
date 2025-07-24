@@ -39,10 +39,6 @@ const Upload = () => {
 
         const resumeContent = result.text ?? '';
 
-
-
-
-        
         setStatusText('Converting to image...');
         const imageFile = await convertPdfToImage(file);
         if(!imageFile.file) return setStatusText('Failed to convert PDF to image');
@@ -66,32 +62,18 @@ const Upload = () => {
 
         setStatusText('Analyzing...');
 
-        // const feedback = await ai.feedback(
-        //     uploadedFile.path, 
-        //     prepareInstructions({jobTitle, jobDescription, AIResponseFormat})
-        // )
-
         const feedback = await geminiFeedback({jobTitle, jobDescription, resumeContent, AIResponseFormat});
 
         console.log('feedback: ', feedback);
 
         if(!feedback) return setStatusText('Failed to analyze resume');
 
-        // const feedbackText = typeof feedback.message.content === 'string' ? 
-        //     feedback.message.content : feedback.message.content[0].text;
-
-        // data.feedback = JSON.parse(feedbackText);
-
         data.feedback = feedback;
-
-        console.log(data);
-
 
         await kv.set(`resume:${uuid}`, JSON.stringify(data));
         setStatusText('Analysis complete, redirecting...')
         
         navigate(`/resume/${uuid}`);
-
     }
 
     const handleSubmit = (e: FormEvent<HTMLFormElement> ) => {
