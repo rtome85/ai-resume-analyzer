@@ -3,9 +3,10 @@ import {useState, type FormEvent} from 'react'
 import FileUploader from "~/components/FileUploader";
 import { usePuterStore } from "~/lib/puter";
 import { useNavigate } from "react-router";
-import { convertPdfToImage } from "~/lib/pdf2img";
-import { generateUUID } from "~/lib/utils";
+import { convertPdfToImage, pdf2json } from "~/lib/pdf2img";
+import { generateUUID, geminiFeedback } from "~/lib/utils";
 import { AIResponseFormat, prepareInstructions } from "~/constants";
+
 
 const Upload = () => {
     const {auth, isLoading, fs, ai, kv} =  usePuterStore();
@@ -13,6 +14,7 @@ const Upload = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [statusText, setStatusText] = useState('');
     const [file, setFile] = useState<File | null>(null);
+    
 
     const handleFileSelect = (file:File | null) => {
         setFile(file);
@@ -26,7 +28,20 @@ const Upload = () => {
         setStatusText('Uploading the file...')
 
         const uploadedFile = await fs.upload([file])
-        if(!uploadedFile) return setStatusText('Error: Failed to upload file')
+        if(!uploadedFile) return setStatusText('Error: Failed to upload file');
+
+        const result = await pdf2json(file);
+        
+        if (result.error) {
+            console.error('PDF conversion failed:', result.error);
+            return;
+        }
+
+        const resumeContent = result.text ?? '';
+
+
+
+
         
         setStatusText('Converting to image...');
         const imageFile = await convertPdfToImage(file);
@@ -44,25 +59,33 @@ const Upload = () => {
             resumePath: uploadedFile.path, 
             imagePath: uploadedImage.path,
             companyName, jobTitle, jobDescription, 
-            feedback: ''
+            feedback: {}
         }
 
         await kv.set(`resume:${uuid}`, JSON.stringify(data));
 
         setStatusText('Analyzing...');
 
-        const feedback = await ai.feedback(
-            uploadedFile.path, 
-            prepareInstructions({jobTitle, jobDescription, AIResponseFormat})
+        // const feedback = await ai.feedback(
+        //     uploadedFile.path, 
+        //     prepareInstructions({jobTitle, jobDescription, AIResponseFormat})
+        // )
 
-        )
+        const feedback = await geminiFeedback({jobTitle, jobDescription, resumeContent, AIResponseFormat});
+
+        console.log('feedback: ', feedback);
 
         if(!feedback) return setStatusText('Failed to analyze resume');
 
-        const feedbackText = typeof feedback.message.content === 'string' ? 
-            feedback.message.content : feedback.message.content[0].text;
+        // const feedbackText = typeof feedback.message.content === 'string' ? 
+        //     feedback.message.content : feedback.message.content[0].text;
 
-        data.feedback = JSON.parse(feedbackText);
+        // data.feedback = JSON.parse(feedbackText);
+
+        data.feedback = feedback;
+
+        console.log(data);
+
 
         await kv.set(`resume:${uuid}`, JSON.stringify(data));
         setStatusText('Analysis complete, redirecting...')

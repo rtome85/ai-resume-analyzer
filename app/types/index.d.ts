@@ -55,6 +55,14 @@ interface Job {
         explanation: string;
       }[];
     };
+    suggestions: {
+      tips: {
+        section : string, 
+        tip: string, 
+        suggestion: string, 
+        example: string
+      }[];
+    };
   }
 
   interface FileUploaderProps {

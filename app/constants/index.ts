@@ -1,3 +1,6 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { parseMarkdownToJson } from "~/lib/utils";
+
 export const resumes: Resume[] = [
     {
       id: "1",
@@ -133,6 +136,14 @@ export const resumes: Resume[] = [
             explanation: string; //explain in detail here
           }[]; //give 3-4 tips
         };
+        suggestions: { 
+          tips: {
+            section: string; //the section that can be improved, can be created if it doesn't exit in the actual resume
+            tip: string; //make it a short "title" for the actual explanation
+            suggestion: string; //explain in detail here the changes that can be made in the current resume sections
+            example: string; //Provide an example of a rewrite 
+          }[]; 
+        };
       }`;
   
   export const prepareInstructions = ({
@@ -153,6 +164,49 @@ export const resumes: Resume[] = [
     If provided, take the job description into consideration.
     The job title is: ${jobTitle}
     The job description is: ${jobDescription}
-    Provide the feedback using the following format: ${AIResponseFormat}
+    Provide the feedback using the following structure: 
+    {
+        overallScore: number; //max 100
+        ATS: {
+          score: number; //rate based on ATS suitability
+          tips: {
+            type: "good" | "improve";
+            tip: string; //give 3-4 tips
+          }[];
+        };
+        toneAndStyle: {
+          score: number; //max 100
+          tips: {
+            type: "good" | "improve";
+            tip: string; //make it a short "title" for the actual explanation
+            explanation: string; //explain in detail here
+          }[]; //give 3-4 tips
+        };
+        content: {
+          score: number; //max 100
+          tips: {
+            type: "good" | "improve";
+            tip: string; //make it a short "title" for the actual explanation
+            explanation: string; //explain in detail here
+          }[]; //give 3-4 tips
+        };
+        structure: {
+          score: number; //max 100
+          tips: {
+            type: "good" | "improve";
+            tip: string; //make it a short "title" for the actual explanation
+            explanation: string; //explain in detail here
+          }[]; //give 3-4 tips
+        };
+        skills: {
+          score: number; //max 100
+          tips: {
+            type: "good" | "improve";
+            tip: string; //make it a short "title" for the actual explanation
+            explanation: string; //explain in detail here
+          }[]; //give 3-4 tips
+        };
+      }
     Return the analysis as a JSON object, without any other text and without the backticks.
     Do not include any other text or comments.`;
+
