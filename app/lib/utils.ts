@@ -75,4 +75,6 @@ export const geminiFeedback = async ({jobTitle, jobDescription, resumeContent, A
           console.error('Error generating feedback with Gemini: ', error);
           return null;
         }
-      }
+      };
+
+

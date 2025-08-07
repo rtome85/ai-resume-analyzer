@@ -1,5 +1,40 @@
 import { create } from "zustand";
 
+// Guest storage service
+export const GuestStorageService = {
+  SESSION_PREFIX: 'resumind_guest_',
+  
+  saveResume(id: string, data: File) {
+    sessionStorage.setItem(
+      `${this.SESSION_PREFIX}resume_${id}`, 
+      JSON.stringify(data)
+    );
+  },
+  
+  getResume(id: string): Resume | null {
+    const data = sessionStorage.getItem(`${this.SESSION_PREFIX}resume_${id}`);
+    return data ? JSON.parse(data) : null;
+  },
+  
+  getAllResumes(): Resume[] {
+    const resumes: Resume[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(`${this.SESSION_PREFIX}resume_`)) {
+        const data = sessionStorage.getItem(key);
+        if (data) resumes.push(JSON.parse(data));
+      }
+    }
+    return resumes;
+  },
+  
+  clearSession() {
+    Object.keys(sessionStorage)
+      .filter(key => key.startsWith(this.SESSION_PREFIX))
+      .forEach(key => sessionStorage.removeItem(key));
+  }
+};
+
 declare global {
   interface Window {
     puter: {
@@ -49,8 +84,10 @@ interface PuterStore {
   auth: {
     user: PuterUser | null;
     isAuthenticated: boolean;
+    isGuest: boolean;
     signIn: () => Promise<void>;
     signOut: () => Promise<void>;
+    setGuestMode: (isGuest: boolean) => void;
     refreshUser: () => Promise<void>;
     checkAuthStatus: () => Promise<boolean>;
     getUser: () => PuterUser | null;
@@ -107,14 +144,23 @@ export const usePuterStore = create<PuterStore>((set, get) => {
       auth: {
         user: null,
         isAuthenticated: false,
+        isGuest: false,
         signIn: get().auth.signIn,
         signOut: get().auth.signOut,
+        setGuestMode: get().auth.setGuestMode,
         refreshUser: get().auth.refreshUser,
         checkAuthStatus: get().auth.checkAuthStatus,
         getUser: get().auth.getUser,
       },
     });
   };
+
+  //guest storage methods
+  const saveResume = (id: string, data: File) => {
+    if (get().auth.isGuest) {
+      GuestStorageService.saveResume(id, data);
+    }
+  }
 
   const checkAuthStatus = async (): Promise<boolean> => {
     const puter = getPuter();
@@ -133,8 +179,10 @@ export const usePuterStore = create<PuterStore>((set, get) => {
           auth: {
             user,
             isAuthenticated: true,
+            isGuest: false,
             signIn: get().auth.signIn,
             signOut: get().auth.signOut,
+            setGuestMode: get().auth.setGuestMode,
             refreshUser: get().auth.refreshUser,
             checkAuthStatus: get().auth.checkAuthStatus,
             getUser: () => user,
@@ -147,8 +195,10 @@ export const usePuterStore = create<PuterStore>((set, get) => {
           auth: {
             user: null,
             isAuthenticated: false,
+            isGuest: false,
             signIn: get().auth.signIn,
             signOut: get().auth.signOut,
+            setGuestMode: get().auth.setGuestMode,
             refreshUser: get().auth.refreshUser,
             checkAuthStatus: get().auth.checkAuthStatus,
             getUser: () => null,
@@ -198,8 +248,10 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         auth: {
           user: null,
           isAuthenticated: false,
+          isGuest: false,
           signIn: get().auth.signIn,
           signOut: get().auth.signOut,
+          setGuestMode: get().auth.setGuestMode,
           refreshUser: get().auth.refreshUser,
           checkAuthStatus: get().auth.checkAuthStatus,
           getUser: () => null,
@@ -227,8 +279,10 @@ export const usePuterStore = create<PuterStore>((set, get) => {
         auth: {
           user,
           isAuthenticated: true,
+          isGuest: false,
           signIn: get().auth.signIn,
           signOut: get().auth.signOut,
+          setGuestMode: get().auth.setGuestMode,
           refreshUser: get().auth.refreshUser,
           checkAuthStatus: get().auth.checkAuthStatus,
           getUser: () => user,
@@ -411,6 +465,16 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     return puter.kv.flush();
   };
 
+  const setGuestMode = (isGuest: boolean) => {
+    set((state) => ({
+      auth: {
+        ...state.auth,
+        isGuest,
+        isAuthenticated: isGuest || state.auth.isAuthenticated,
+      },
+    }));
+  };
+
   return {
     isLoading: true,
     error: null,
@@ -418,8 +482,10 @@ export const usePuterStore = create<PuterStore>((set, get) => {
     auth: {
       user: null,
       isAuthenticated: false,
+      isGuest: false,
       signIn,
       signOut,
+      setGuestMode,
       refreshUser,
       checkAuthStatus,
       getUser: () => get().auth.user,

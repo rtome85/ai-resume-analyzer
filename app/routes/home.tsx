@@ -3,7 +3,7 @@ import Navbar from "~/components/Navbar";
 import ResumeCard from "~/components/ResumeCard";
 import { useEffect, useState } from "react"
 import { Link, useLocation, useNavigate } from "react-router";
-import { usePuterStore } from "~/lib/puter"
+import { GuestStorageService, usePuterStore } from "~/lib/puter"
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -17,6 +17,8 @@ export default function Home() {
   const navigate = useNavigate();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(false);
+
+  console.log('Guest Storage: ', GuestStorageService.getAllResumes());
 
   //checks user authentication
   useEffect(() => {
