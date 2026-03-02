@@ -1,4 +1,3 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { parseMarkdownToJson } from "~/lib/utils";
 
 export const resumes: Resume[] = [
