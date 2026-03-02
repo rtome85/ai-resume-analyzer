@@ -22,55 +22,54 @@ const Upload = () => {
     companyName: string, jobTitle: string, jobDescription: string, file: File
   }) => {
     setIsProcessing(true);
-    setStatusText('Uploading the file...')
+    setStatusText('Uploading the file...');
 
-    const uploadedFile = await fs.upload([file])
-    if (!uploadedFile) return setStatusText('Error: Failed to upload file');
+    try {
+      const uploadedFile = await fs.upload([file]);
+      if (!uploadedFile) throw new Error('Failed to upload file');
 
-    const result = await pdf2json(file);
+      const result = await pdf2json(file);
+      if (result.error) throw new Error(`PDF conversion failed: ${result.error}`);
 
-    if (result.error) {
-      console.error('PDF conversion failed:', result.error);
-      return;
+      const resumeContent = result.text ?? '';
+
+      setStatusText('Converting to image...');
+      const imageFile = await convertPdfToImage(file);
+      if (!imageFile.file) throw new Error('Failed to convert PDF to image');
+
+      setStatusText('Uploading the image...');
+      const uploadedImage = await fs.upload([imageFile.file]);
+      if (!uploadedImage) throw new Error('Failed to upload image');
+
+      setStatusText('Preparing data...');
+
+      const uuid = generateUUID();
+      const data = {
+        id: uuid,
+        resumePath: uploadedFile.path,
+        imagePath: uploadedImage.path,
+        companyName, jobTitle, jobDescription,
+        feedback: {}
+      }
+
+      await kv.set(`resume:${uuid}`, JSON.stringify(data));
+
+      setStatusText('Analyzing...');
+
+      const feedback = await geminiFeedback({ jobTitle, jobDescription, resumeContent, AIResponseFormat });
+      if (!feedback) throw new Error('Failed to analyze resume');
+
+      data.feedback = feedback;
+
+      await kv.set(`resume:${uuid}`, JSON.stringify(data));
+      setStatusText('Analysis complete, redirecting...');
+
+      navigate(`/resume/${uuid}`);
+    } catch (error) {
+      console.error('Analysis error:', error);
+      setStatusText(error instanceof Error ? `Error: ${error.message}` : 'An unexpected error occurred');
+      setIsProcessing(false);
     }
-
-    const resumeContent = result.text ?? '';
-
-    setStatusText('Converting to image...');
-    const imageFile = await convertPdfToImage(file);
-    if (!imageFile.file) return setStatusText('Failed to convert PDF to image');
-
-    setStatusText('Uploading the image...')
-    const uploadedImage = await fs.upload([imageFile.file]);
-    if (!uploadedImage) return setStatusText('Error: Failed to upload image');
-
-    setStatusText('Preparing data...');
-
-    const uuid = generateUUID();
-    const data = {
-      id: uuid,
-      resumePath: uploadedFile.path,
-      imagePath: uploadedImage.path,
-      companyName, jobTitle, jobDescription,
-      feedback: {}
-    }
-
-    await kv.set(`resume:${uuid}`, JSON.stringify(data));
-
-    setStatusText('Analyzing...');
-
-    const feedback = await geminiFeedback({ jobTitle, jobDescription, resumeContent, AIResponseFormat });
-
-    console.log('feedback: ', feedback);
-
-    if (!feedback) return setStatusText('Failed to analyze resume');
-
-    data.feedback = feedback;
-
-    await kv.set(`resume:${uuid}`, JSON.stringify(data));
-    setStatusText('Analysis complete, redirecting...')
-
-    navigate(`/resume/${uuid}`);
   }
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -125,7 +124,7 @@ const Upload = () => {
           <div className="w-full max-w-2xl">
             <div className="feedback-card">
               <form id="upload-form" onSubmit={handleSubmit} className="flex flex-col gap-5">
-                <div className="grid grid-cols-1 sm:grid-cols-q gap-4 w-full">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
                   <div className="form-div">
                     <label htmlFor="company-name">Company Name</label>
                     <input

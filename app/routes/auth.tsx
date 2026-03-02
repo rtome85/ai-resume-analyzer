@@ -10,8 +10,10 @@ export const meta = () => ([
 const Auth = () => {
   const { isLoading, auth } = usePuterStore();
   const location = useLocation();
-  const next = location.search.split('next=')[1];
   const navigate = useNavigate();
+
+  const rawNext = new URLSearchParams(location.search).get('next');
+  const next = rawNext && rawNext.startsWith('/') ? rawNext : '/';
 
   useEffect(() => {
     if (auth.isAuthenticated) navigate(next);
@@ -19,7 +21,7 @@ const Auth = () => {
 
   const handleGuestLogin = () => {
     auth.setGuestMode(true);
-    navigate(next || '/');
+    navigate(next);
   }
 
   return (

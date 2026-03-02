@@ -24,6 +24,9 @@ const Resume = () => {
   }, [isLoading])
 
   useEffect(() => {
+    let createdResumeUrl = '';
+    let createdImageUrl = '';
+
     const loadResume = async () => {
       const resume = await kv.get(`resume:${id}`);
       if (!resume) return;
@@ -34,16 +37,23 @@ const Resume = () => {
       if (!resumeBlob) return;
 
       const pdfBlob = new Blob([resumeBlob], { type: 'application/pdf' });
-      setResumeUrl(URL.createObjectURL(pdfBlob));
+      createdResumeUrl = URL.createObjectURL(pdfBlob);
+      setResumeUrl(createdResumeUrl);
 
       const imageBlob = await fs.read(data.imagePath);
       if (!imageBlob) return;
-      setImageUrl(URL.createObjectURL(imageBlob));
+      createdImageUrl = URL.createObjectURL(imageBlob);
+      setImageUrl(createdImageUrl);
 
       setFeedback(data.feedback);
     }
 
     loadResume();
+
+    return () => {
+      if (createdResumeUrl) URL.revokeObjectURL(createdResumeUrl);
+      if (createdImageUrl) URL.revokeObjectURL(createdImageUrl);
+    };
   }, [id]);
 
   return (

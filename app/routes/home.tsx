@@ -5,7 +5,7 @@ import { useEffect, useState } from "react"
 import { Link, useNavigate } from "react-router";
 import { GuestStorageService, usePuterStore } from "~/lib/puter"
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "Resumind" },
     { name: "description", content: "Tailor your resume to the job you want" },
@@ -18,10 +18,8 @@ export default function Home() {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [loadingResumes, setLoadingResumes] = useState(false);
 
-  console.log('Guest Storage: ', GuestStorageService.getAllResumes());
-
   useEffect(() => {
-    if (!auth.isAuthenticated) navigate('/auth?/next=/');
+    if (!auth.isAuthenticated) navigate('/auth?next=/');
   }, [auth.isAuthenticated])
 
   useEffect(() => {
@@ -29,14 +27,10 @@ export default function Home() {
       setLoadingResumes(true);
 
       const resumes = (await kv.list('resume:*', true)) as KVItem[];
-
-      console.log('Resumes: ', resumes)
-
       const parsedResumes = resumes?.map(resume => (
         JSON.parse(resume.value) as Resume
       ))
 
-      console.log('Parsed Resumes:', parsedResumes);
       setResumes(parsedResumes || []);
       setLoadingResumes(false);
     }

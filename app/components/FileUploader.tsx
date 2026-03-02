@@ -1,23 +1,24 @@
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { useDropzone } from "react-dropzone"
 import { formatSize } from "~/lib/utils";
 
 const FileUploader = ({ onFileSelect }: FileUploaderProps) => {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0] || null;
+    setSelectedFile(file);
     onFileSelect?.(file);
   }, [onFileSelect]);
 
   const maxFileSize = 20 * 1024 * 1024; // 20MB
 
-  const { getRootProps, getInputProps, isDragActive, acceptedFiles } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: false,
     accept: { "application/pdf": [".pdf"] },
     maxSize: maxFileSize,
   });
-
-  const file = acceptedFiles[0] || null;
 
   return (
     <div className="w-full">
@@ -33,23 +34,25 @@ const FileUploader = ({ onFileSelect }: FileUploaderProps) => {
       >
         <input {...getInputProps()} />
 
-        {file ? (
+        {selectedFile ? (
           <div className="uploader-selected-file m-3">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <img src="/images/pdf.png" alt="PDF" className="w-9 h-9 flex-shrink-0" />
               <div className="min-w-0">
                 <p className="text-sm font-medium text-slate-900 truncate">
-                  {file.name}
+                  {selectedFile.name}
                 </p>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {formatSize(file.size)}
+                  {formatSize(selectedFile.size)}
                 </p>
               </div>
             </div>
             <button
+              type="button"
               className="p-1.5 rounded-lg hover:bg-slate-200 transition-colors cursor-pointer flex-shrink-0"
               onClick={(e) => {
                 e.stopPropagation();
+                setSelectedFile(null);
                 onFileSelect?.(null);
               }}
             >
