@@ -4,8 +4,8 @@ import FileUploader from "~/components/FileUploader";
 import { usePuterStore } from "~/lib/puter";
 import { useNavigate } from "react-router";
 import { convertPdfToImage, pdf2json } from "~/lib/pdf2img";
-import { generateUUID, geminiFeedback } from "~/lib/utils";
-import { AIResponseFormat, prepareInstructions } from "~/constants";
+import { generateUUID } from "~/lib/utils";
+import { AIResponseFormat } from "~/constants";
 
 const Upload = () => {
   const { auth, isLoading, fs, ai, kv } = usePuterStore();
@@ -56,7 +56,13 @@ const Upload = () => {
 
       setStatusText('Analyzing...');
 
-      const feedback = await geminiFeedback({ jobTitle, jobDescription, resumeContent, AIResponseFormat });
+      const res = await fetch('/api/analyze-resume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jobTitle, jobDescription, resumeContent, AIResponseFormat }),
+      });
+      if (!res.ok) throw new Error('Failed to analyze resume');
+      const { feedback } = await res.json();
       if (!feedback) throw new Error('Failed to analyze resume');
 
       data.feedback = feedback;
