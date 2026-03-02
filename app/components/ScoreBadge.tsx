@@ -5,28 +5,19 @@ interface ScoreBadgeProps {
 }
 
 const ScoreBadge: React.FC<ScoreBadgeProps> = ({ score }) => {
-  let badgeClass = "";
-  let textClass = "";
-  let label = "";
-
-  if (score > 69) {
-    badgeClass = "bg-badge-green";
-    textClass = "text-green-600";
-    label = "Strong";
-  } else if (score > 49) {
-    badgeClass = "bg-badge-yellow";
-    textClass = "text-yellow-600";
-    label = "Good start";
-  } else {
-    badgeClass = "bg-badge-red";
-    textClass = "text-red-600";
-    label = "Needs Work";
-  }
+  const config =
+    score > 69
+      ? { bg: "bg-green-100", text: "text-green-700", label: "Strong" }
+      : score > 49
+      ? { bg: "bg-amber-100", text: "text-amber-700", label: "Good Start" }
+      : { bg: "bg-red-100", text: "text-red-600", label: "Needs Work" };
 
   return (
-    <div className={`inline-block px-3 py-1 rounded-full ${badgeClass}`}> 
-      <p className={`text-sm font-semibold ${textClass}`}>{label}</p>
-    </div>
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${config.bg} ${config.text}`}
+    >
+      {config.label}
+    </span>
   );
 };
 

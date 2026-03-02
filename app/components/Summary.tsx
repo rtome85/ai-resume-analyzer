@@ -1,43 +1,52 @@
 import ScoreGauge from "./ScoreGauge"
 import ScoreBadge from "./ScoreBadge"
 
-const Category = ({title, score}: {title: string, score: number}) => {
-    const textColor = score > 70 ? 'text-green-600' 
-        : score > 49 ? 'text-yellow-600' : 'text-red-600'
+const Category = ({ title, score }: { title: string; score: number }) => {
+  return (
+    <div className="flex items-center justify-between py-3 px-1 border-b border-slate-100 last:border-0">
+      <div className="flex items-center gap-2.5">
+        <span className="text-sm font-medium text-slate-700">{title}</span>
+        <ScoreBadge score={score} />
+      </div>
+      <span className="text-sm font-semibold text-slate-900 tabular-nums">
+        {score}
+        <span className="text-slate-400 font-normal">/100</span>
+      </span>
+    </div>
+  );
+};
 
-    return (
-        <div className="resume-summary">
-            <div className="category">
-                <div className="flex flex-row gap-2 items-center justify-center">
-                    <p className="text-2xl">{title}</p>
-                    <ScoreBadge score={score} />
-                </div>
-                <p className="text-2xl">
-                    <span className={textColor}>{score}</span>/100
-                </p>
-            </div>
+const Summary = ({ feedback }: { feedback: Feedback }) => {
+  return (
+    <div className="feedback-card">
+      {/* Overall score row */}
+      <div className="flex items-center gap-5 mb-6 pb-5 border-b border-slate-100">
+        <ScoreGauge score={feedback.overallScore} />
+        <div className="flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+            Overall Score
+          </p>
+          <h3 className="text-lg font-bold text-slate-900 leading-tight">
+            Resume Score
+          </h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Based on tone, content, structure &amp; skills
+          </p>
         </div>
-    )
-}
+      </div>
 
-const Summary = ({feedback}: {feedback: Feedback}) => {
+      {/* Category breakdown */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2 px-1">
+          Category Breakdown
+        </p>
+        <Category title="Tone &amp; Style" score={feedback.toneAndStyle.score} />
+        <Category title="Content" score={feedback.content.score} />
+        <Category title="Structure" score={feedback.structure.score} />
+        <Category title="Skills" score={feedback.skills.score} />
+      </div>
+    </div>
+  );
+};
 
-    return (
-        <div className="bg-white rounded-2xl shadow-md w-full">
-            <div className="flex flex-row items-center p-4 gap-8">
-                <ScoreGauge score={feedback.overallScore} />
-                <div className="flex flex-col gap-2">
-                    <h2 className="text-2xl font-bold">Your Resume Score</h2>
-                    <p className="text-sm text-gray-500">This score is calculated based on the variables listed below.</p>
-                </div>
-            </div>
-
-            <Category title="Tone & Style" score={feedback.toneAndStyle.score} />
-            <Category title="Content" score={feedback.content.score} />
-            <Category title="Structure" score={feedback.structure.score} />
-            <Category title="Skills" score={feedback.skills.score} />
-        </div>
-    )
-}
-
-export default Summary
+export default Summary;
